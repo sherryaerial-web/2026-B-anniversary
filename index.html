@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="deploy-refresh" content="2026-07-04T16:10:00+08:00">
   <title>Sherry Aerial 2026 Anniversary</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -257,6 +256,27 @@
       line-height: 1.5;
     }
 
+    .claim-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+    }
+
+    .claim-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 1.55rem;
+      padding: 0 0.55rem;
+      border-radius: 999px;
+      background: rgba(143, 203, 224, 0.16);
+      color: #4f86a0;
+      font-size: 0.72rem;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
     .pick-pill {
       display: inline-flex;
       align-items: center;
@@ -268,6 +288,27 @@
       color: var(--ink);
       font-size: 0.78rem;
       font-weight: 700;
+    }
+
+    .notice-box {
+      margin: 0.85rem 0;
+      padding: 0.85rem 0.95rem;
+      border: 1px solid rgba(143, 203, 224, 0.28);
+      border-radius: 0.72rem;
+      background: rgba(232, 247, 255, 0.6);
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.65;
+      text-align: left;
+    }
+
+    .notice-title {
+      display: block;
+      margin-bottom: 0.2rem;
+      color: var(--ink);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
     }
 
     .detail-images {
@@ -451,12 +492,17 @@
         button.innerHTML = `
           <span>
             <span class="prize-name"></span>
-            <span class="prize-meta"></span>
+            <span class="claim-tags"></span>
           </span>
           <span class="pick-pill">選取</span>
         `;
         button.querySelector(".prize-name").textContent = prize.name;
-        button.querySelector(".prize-meta").textContent = prize.note || claimLabel(prize);
+        claimTags(prize).forEach((label) => {
+          const tag = document.createElement("span");
+          tag.className = "claim-tag";
+          tag.textContent = label;
+          button.querySelector(".claim-tags").appendChild(tag);
+        });
         button.addEventListener("click", () => confirmPick(rank, prize));
         list.appendChild(button);
       });
@@ -480,6 +526,15 @@
       return "送出後將寫入中獎紀錄";
     }
 
+    function claimTags(prize) {
+      const tags = [];
+      if (prize.requiresVenue) tags.push("需選館別");
+      if (prize.claimMethod === "show_code") tags.push("折扣碼");
+      if (prize.images.length) tags.push("含圖片");
+      if (!tags.length) tags.push("直接領取");
+      return tags;
+    }
+
     function confirmPick(rank, prize) {
       const content = document.createElement("div");
       const name = document.createElement("p");
@@ -488,9 +543,10 @@
       content.appendChild(name);
 
       if (prize.note) {
-        const note = document.createElement("p");
-        note.className = "prize-meta";
-        note.textContent = prize.note;
+        const note = document.createElement("div");
+        note.className = "notice-box";
+        note.innerHTML = '<span class="notice-title">領取方式</span>';
+        note.appendChild(document.createTextNode(prize.note));
         content.appendChild(note);
       }
 
