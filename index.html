@@ -614,7 +614,10 @@
       const tags = [];
       if (prize.requiresVenue) tags.push("需選館別");
       if (prize.claimMethod === "show_code") tags.push("折扣碼");
-      if (!tags.length) tags.push("直接領取");
+      if (!tags.length) {
+        const needsContact = String(prize.note || "").includes("私訊官方帳號");
+        tags.push(needsContact ? "私訊官方帳號領取" : "直接領取");
+      }
       if (prize.images.length) tags.push("含圖片");
       return tags;
     }
@@ -636,7 +639,7 @@
 
       if (prize.images.length) {
         if (prize.photos.length) {
-          content.appendChild(createImageSection("實拍照片", prize.photos, `${prize.name} 實拍照片`, ""));
+          content.appendChild(createImageSection("示意圖", prize.photos, `${prize.name} 示意圖`, ""));
         }
         if (prize.sizeCharts.length) {
           content.appendChild(createImageSection("尺寸表", prize.sizeCharts, `${prize.name} 尺寸表`, "size-chart"));
