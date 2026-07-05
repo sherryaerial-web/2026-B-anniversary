@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="deploy-refresh" content="2026-07-04T16:45:00+08:00">
+  <meta name="deploy-refresh" content="2026-07-05T16:58:00+08:00">
   <title>Sherry Aerial 2026 Anniversary</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -316,7 +316,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
       gap: 0.75rem;
-      margin: 0.7rem 0;
+      margin: 0.45rem 0 0.85rem;
     }
 
     .detail-images img {
@@ -326,6 +326,29 @@
       border: 1px solid rgba(67, 59, 50, 0.1);
       border-radius: 0.68rem;
       background: #fffdf8;
+    }
+
+    .detail-media-section {
+      margin: 0.8rem 0 0;
+      text-align: left;
+    }
+
+    .detail-media-title {
+      display: block;
+      margin: 0 0 0.35rem;
+      color: var(--ink);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .detail-images.size-chart {
+      grid-template-columns: 1fr;
+    }
+
+    .detail-images.size-chart img {
+      height: auto;
+      max-height: 360px;
     }
 
     .venue-select {
@@ -463,8 +486,13 @@
     function normalizePrizes(prizes) {
       return prizes.map((item, index) => {
         if (typeof item === "string") {
-          return { id: item, name: item, note: "", venues: [], requiresVenue: false, images: [] };
+          return { id: item, name: item, note: "", venues: [], requiresVenue: false, photos: [], sizeCharts: [], images: [] };
         }
+        const photos = [
+          ...splitImageUrls(item.mainImageUrl),
+          ...splitImageUrls(item.styleImageUrl)
+        ];
+        const sizeCharts = splitImageUrls(item.sizeChartImageUrl);
         return {
           id: item.id || item.prizeId || item.name || String(index),
           name: item.name || item.prizeName || "",
@@ -472,9 +500,20 @@
           claimMethod: item.claimMethod || "",
           requiresVenue: Boolean(item.requiresVenue),
           venues: Array.isArray(item.venues) ? item.venues : [],
-          images: [item.mainImageUrl, item.styleImageUrl, item.sizeChartImageUrl].filter(Boolean)
+          photos,
+          sizeCharts,
+          images: [...photos, ...sizeCharts]
         };
       });
+    }
+
+    function splitImageUrls(value) {
+      if (!value) return [];
+      if (Array.isArray(value)) return value.flatMap(splitImageUrls);
+      return String(value)
+        .split(/[\n\r\t ;；]+/)
+        .map((url) => url.trim())
+        .filter(Boolean);
     }
 
     function showPrizes(rank, prizes) {
@@ -552,15 +591,12 @@
       }
 
       if (prize.images.length) {
-        const images = document.createElement("div");
-        images.className = "detail-images";
-        prize.images.forEach((src) => {
-          const img = document.createElement("img");
-          img.src = src;
-          img.alt = `${prize.name} 圖片`;
-          images.appendChild(img);
-        });
-        content.appendChild(images);
+        if (prize.photos.length) {
+          content.appendChild(createImageSection("實拍照片", prize.photos, `${prize.name} 實拍照片`, ""));
+        }
+        if (prize.sizeCharts.length) {
+          content.appendChild(createImageSection("尺寸表", prize.sizeCharts, `${prize.name} 尺寸表`, "size-chart"));
+        }
       }
 
       if (prize.requiresVenue) {
@@ -602,6 +638,27 @@
           showPrizes(rank, cachedPrizes);
         }
       });
+    }
+
+    function createImageSection(title, urls, alt, extraClass) {
+      const section = document.createElement("div");
+      section.className = "detail-media-section";
+
+      const label = document.createElement("span");
+      label.className = "detail-media-title";
+      label.textContent = title;
+      section.appendChild(label);
+
+      const images = document.createElement("div");
+      images.className = `detail-images ${extraClass || ""}`.trim();
+      urls.forEach((src) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = alt;
+        images.appendChild(img);
+      });
+      section.appendChild(images);
+      return section;
     }
 
     async function onPick(rank, prize, selectedVenue) {
